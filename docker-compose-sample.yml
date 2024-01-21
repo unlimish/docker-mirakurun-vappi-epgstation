@@ -1,28 +1,5 @@
 version: '3.7'
 services:
-    mirakurun:
-        image: chinachu/mirakurun
-        cap_add:
-            - SYS_ADMIN
-            - SYS_NICE
-        ports:
-            - "40772:40772"
-            - "9229:9229"
-        volumes:
-            - ./mirakurun/conf:/app-config
-            - ./mirakurun/data:/app-data
-        environment:
-            TZ: "Asia/Tokyo"
-        devices:
-            - /dev/bus:/dev/bus
-            - /dev/dvb:/dev/dvb
-        restart: always
-        logging:
-            driver: json-file
-            options:
-                max-file: "1"
-                max-size: 10m
-
     mysql:
         image: mariadb:10.5
         # image: mysql:8.0 # 囲み文字を使用する場合
@@ -49,20 +26,27 @@ services:
         volumes:
             - ./epgstation/config:/app/config
             - ./epgstation/data:/app/data
+            - /var/tmp:/app/data/streamfiles
+            # - /var/tmp:/app/data/upload
             - ./epgstation/thumbnail:/app/thumbnail
             - ./epgstation/logs:/app/logs
             - ./recorded:/app/recorded
+            - ./join_logo_scp_trial/JL:/join_logo_scp_trial/JL
+            - ./join_logo_scp_trial/logo:/join_logo_scp_trial/logo
+            - ./join_logo_scp_trial/result:/join_logo_scp_trial/result
+            - ./join_logo_scp_trial/setting:/join_logo_scp_trial/setting
+            - ./join_logo_scp_trial/src:/join_logo_scp_trial/src 
         environment:
             TZ: "Asia/Tokyo"
+            LIBVA_DRIVER_NAME: "iHD"
         depends_on:
-            - mirakurun
             - mysql
         ports:
             - "8888:8888"
             - "8889:8889"
-#         user: "1000:1000"
-#         devices:
-#             - /dev/dri:/dev/dri
+        # user: "1000:1000"
+        devices:
+             - /dev/dri:/dev/dri
         restart: always
 
 volumes:
