@@ -1,0 +1,14 @@
+logLevel: 2
+path: /var/run/mirakurun.sock
+port: 40772
+allowIPv4CidrRanges:
+  - 10.0.0.0/8
+  - 100.0.0.0/8
+  - 127.0.0.0/8
+  - 172.16.0.0/12
+  - 192.168.0.0/16
+allowIPv6CidrRanges:
+  - fc00::/7
+  - fd7a:115c:a1e0::/128
+disableIPv6: false
+hostname: dac237400cc6

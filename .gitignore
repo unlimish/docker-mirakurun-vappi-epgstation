@@ -4,7 +4,6 @@
 *.log-*
 .DS_Store
 /recorded/*
-/mirakurun
 /epgstation/thumbnail/*.jpg
 /epgstation/data/streamfiles/*.ts
 /epgstation/data/streamfiles/*.m3u8
