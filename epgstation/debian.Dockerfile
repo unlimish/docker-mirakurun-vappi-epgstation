@@ -1,33 +1,29 @@
-FROM l3tnun/epgstation:v2.6.20-debian
+FROM l3tnun/epgstation:master-debian AS epgstation
+FROM ubuntu:24.04 AS base
+COPY --from=epgstation /usr/local/include/ /usr/local/include/
+COPY --from=epgstation /usr/local/lib/ /usr/local/lib/
+COPY --from=epgstation /usr/local/bin/ /usr/local/bin/
+COPY --from=epgstation /opt/yarn* /opt/yarn
+RUN ln -fs /opt/yarn/bin/yarn /usr/local/bin/yarn && \
+    ln -fs /opt/yarn/bin/yarnpkg /usr/local/bin/yarnpkg
+COPY --from=epgstation /app/ /app/
+COPY --from=epgstation /app/client/ /app/client/
 
-ENV DEV="make gcc git g++ automake curl wget autoconf build-essential libass-dev libfreetype6-dev libsdl1.2-dev libtheora-dev libtool libva-dev libvdpau-dev libvorbis-dev libxcb1-dev libxcb-shm0-dev libxcb-xfixes0-dev pkg-config texinfo zlib1g-dev \
-        ninja-build cmake meson libboost-all-dev"
-ENV FFMPEG_VERSION=5.1.4
+ENV DEV="make gcc git g++ automake curl wget autoconf build-essential libass-dev libfreetype6-dev libsdl1.2-dev libtheora-dev libtool libva-dev libvdpau-dev libvorbis-dev libxcb1-dev libxcb-shm0-dev libxcb-xfixes0-dev pkg-config texinfo zlib1g-dev"
+ENV QSVDEV="wget git cmake intel-media-va-driver-non-free libva-drm2 libva-x11-2 libva-glx2 libx11-dev libva-dev libigfxcmrt7 libdrm-dev opencl-headers libavcodec60 libavcodec-dev libavutil58 libavutil-dev libavformat60 libavformat-dev libswresample4 libswresample-dev libavfilter9 libavfilter-dev libavdevice60 libavdevice-dev libavfilter-dev libass9 libass-dev"
+ENV TSREPDEV="wget git pkg-config python3 build-essential libavcodec-dev libavutil-dev libavformat-dev libswresample-dev libavfilter-dev"
+ENV FFMPEG_VERSION=7.0
 
 RUN apt-get update && \
     apt-get -y install $DEV && \
     apt-get -y install yasm libx264-dev libmp3lame-dev libopus-dev libvpx-dev && \
     apt-get -y install libx265-dev libnuma-dev && \
-    apt-get -y install libasound2 libass9 libvdpau1 libva-x11-2 libva-drm2 libxcb-shm0 libxcb-xfixes0 libxcb-shape0 libvorbisenc2 libtheora0 libaribb24-dev && \
-\
-### Added for vaapi support
-    echo "deb http://http.us.debian.org/debian buster main contrib non-free" | tee -a /etc/apt/sources.list && \
-    apt-get update && \
-    apt-get -y install i965-va-driver-shaders intel-media-va-driver-non-free vainfo libfdk-aac-dev libfdk-aac1 && \
-\
-# avisynth+
-    cd /tmp && \
-    git clone https://github.com/AviSynth/AviSynthPlus && \
-    cd AviSynthPlus && \
-    mkdir avisynth-build && \
-    cd avisynth-build && \
-    cmake ../ -G Ninja -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON && \
-    ninja && \
-    ninja install && \
-    ldconfig && \
-\
+    apt-get -y install libasound2t64 libass9 libvdpau1 libva-x11-2 libva-drm2 libxcb-shm0 libxcb-xfixes0 libxcb-shape0 libvorbisenc2 libtheora0 libaribb24-dev && \
+    apt-get -y install $QSVDEV && \
+    apt-get -y install $TSREPDEV
+
 # ffmpeg build
-    mkdir /tmp/ffmpeg_sources && \
+RUN mkdir /tmp/ffmpeg_sources && \
     cd /tmp/ffmpeg_sources && \
     curl -fsSL http://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.bz2 | tar -xj --strip-components=1 && \
     ./configure \
@@ -49,77 +45,33 @@ RUN apt-get update && \
       --enable-nonfree \
       --disable-debug \
       --disable-doc \
-      --enable-vaapi \
-      --enable-libfdk-aac \
-      --enable-avisynth \
     && \
     make -j$(nproc) && \
-    make install && \
-\
-# l-smash
-    cd /tmp && \
-    git clone https://github.com/l-smash/l-smash.git && \
-    cd l-smash && \
-    ./configure --enable-shared && \
-    make -j$(nproc) && \
-    make install && \
-\
-# l-smash-source
-    cd /tmp && \
-    git clone -b 20220505 https://github.com/plife18/L-SMASH-Works.git && \
-    cd L-SMASH-Works/AviSynth && \
-    LDFLAGS="-Wl,-Bsymbolic" meson build && \
-    cd build && \
-    ninja -v && \
-    ninja install && \
-\
-# JoinLogoScpTrialSetLinux
-    cd /tmp && \
-    git clone --recursive https://github.com/plife18/JoinLogoScpTrialSetLinux.git && \
-    cd JoinLogoScpTrialSetLinux && \
-    git submodule foreach git pull origin master && \
-    \
-    ## chapter_exe
-    cd /tmp/JoinLogoScpTrialSetLinux/modules/chapter_exe/src && \
-    make -j$(nproc) && \
-    mv chapter_exe /tmp/JoinLogoScpTrialSetLinux/modules/join_logo_scp_trial/bin && \
-    \
-    ## logoframe
-    cd /tmp/JoinLogoScpTrialSetLinux/modules/logoframe/src && \
-    make -j$(nproc) && \
-    mv logoframe /tmp/JoinLogoScpTrialSetLinux/modules/join_logo_scp_trial/bin && \
-    \
-    ## join_logo_scp
-    cd /tmp/JoinLogoScpTrialSetLinux/modules/join_logo_scp/src && \
-    make -j$(nproc) && \
-    mv join_logo_scp /tmp/JoinLogoScpTrialSetLinux/modules/join_logo_scp_trial/bin && \
-    \
-    ## tsdivider
-    cd /tmp/JoinLogoScpTrialSetLinux/modules/tsdivider && \
-    mkdir build && \
-    cd build && \
-    cmake -DCMAKE_BUILD_TYPE=Release .. && \
-    make -j$(nproc) && \
-    mv tsdivider /tmp/JoinLogoScpTrialSetLinux/modules/join_logo_scp_trial/bin && \
-    \
-    ## copy directory
-    mv /tmp/JoinLogoScpTrialSetLinux/modules/join_logo_scp_trial / && \
-\
-# delogo
-    cd /tmp && \
-    git clone https://github.com/tobitti0/delogo-AviSynthPlus-Linux && \
-    cd delogo-AviSynthPlus-Linux/src && \
-    make -j$(nproc) && \
-    make install && \
-\
-# jlse
-    cd /join_logo_scp_trial && \
-    npm install && \
-    npm link && \
-\
+    make install
+
+# QSVEnc
+RUN bash -c "curl -s https://api.github.com/repos/rigaya/QSVEnc/releases/latest | \
+    grep 'browser_download_url.*qsvencc_.*_Ubuntu24.04_amd64.deb' | \
+    cut -d : -f 2,3 | tr -d '\"' | sed 's/^ *//' | \
+    xargs curl -fsSL -o qsvencc_Ubuntu24.04_amd64.deb" && \
+    apt-get -y install ./qsvencc_Ubuntu24.04_amd64.deb
+
+# tsreplace
+RUN bash -c "curl -s https://api.github.com/repos/rigaya/tsreplace/releases/latest | \
+    grep 'browser_download_url.*tsreplace_.*_Ubuntu24.04_amd64.deb' | \
+    cut -d : -f 2,3 | tr -d '\"' | sed 's/^ *//' | \
+    xargs curl -fsSL -o tsreplace_Ubuntu24.04_amd64.deb" && \
+    apt-get -y install ./tsreplace_Ubuntu24.04_amd64.deb
+
 # 不要なパッケージを削除
-    apt-get -y remove $DEV && \
+RUN apt-get -y remove $DEV && \
     apt-get autoremove -y && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     rm -rf /tmp/*
+
+WORKDIR /app
+ENTRYPOINT ["npm"]
+CMD ["start"]
+
+
