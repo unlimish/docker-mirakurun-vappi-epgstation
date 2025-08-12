@@ -15,7 +15,8 @@ const args = [
     '--audio-bitrate', '192',
     '--audio-stream', ':stereo',
     '--avsync', 'vfr',
-    '--gop-len', '90',
+    '--quality', 'fastest',
+    '--gop-len', '40',
     '--log-level', 'quiet,output=info,core_progress=info',
     '--output-format', 'mp4',
     '-o', output,
@@ -42,12 +43,12 @@ if (mode === '4k') {
     args.push('--tff');
     args.push('--vpp-deinterlace', 'normal');
     args.push('-c', 'h264');
-    args.push('--icq', '23');
+    args.push('--icq', '33');
 } else if (mode === 'h265') {
     args.push('--tff');
     args.push('--vpp-deinterlace', 'normal');
     args.push('-c', 'hevc');
-    args.push('--icq', '23');
+    args.push('--icq', '33');
 } else {
     process.exit(1);
 }
