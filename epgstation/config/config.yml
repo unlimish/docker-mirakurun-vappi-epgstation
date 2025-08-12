@@ -36,32 +36,20 @@ ffprobe: /usr/local/bin/ffprobe
 encodeProcessNum: 4
 concurrentEncodeNum: 1
 encode:
-    - name: H264(vaapi)
-      cmd: '%NODE% %ROOT%/config/enc_vaapi.js'
+    - name: H265_qsvenc
+      cmd: '%NODE% %ROOT%/config/enc_qsvenc.js h265'
       suffix: .mp4
       rate: 4.0
-    - name: H264(soft)
-      cmd: '%NODE% %ROOT%/config/enc_software.js'
+    - name: H264_qsvenc
+      cmd: '%NODE% %ROOT%/config/enc_qsvenc.js h264'
       suffix: .mp4
       rate: 4.0
-    - name: H265(vaapi_hevc10b)
-      cmd: '%NODE% %ROOT%/config/enc_vaapi-hevc10bit.js'
-      suffix: .mp4
-      rate: 3.0
-    - name: H264(jlse+vaapi)
-      cmd: '%NODE% %ROOT%/config/jlse_vaapi.js'
-      suffix: .mp4
+    - name: tsreplace
+      cmd: '%NODE% %ROOT%/config/enc_tsreplace.js'
+      suffix: -tsreplace.m2ts
       rate: 4.0
-    - name: H264(jlse+soft)
-      cmd: '%NODE% %ROOT%/config/jlse_software.js'
-      suffix: .mp4
-      rate: 4.0
-    - name: H265(jlse+vaapi-hevc10b)
-      cmd: '%NODE% %ROOT%/config/jlse_vaapi-hevc10bit.js'
-      suffix: .mp4
-      rate: 4.0
-    - name: jlse
-      cmd: '%NODE% %ROOT%/config/jlse.js'
+    - name: H.264
+      cmd: '%NODE% %ROOT%/config/enc.js'
       suffix: .mp4
       rate: 4.0
 
